@@ -25,5 +25,5 @@ Note that I shouldn't really call this a 'little taste', because this is really 
 
 ## Why you should be using LHTM
 * Fewer keystrokes: a side effect of using s-expressions to group content is that tags no longer need to be closed - this drastically reduces the number of keystrokes required and improves productivity
-* Beatiful: because angular brackets are just plain ugly
+* Beautiful: because angular brackets are just plain ugly
 * Increases productivity: because it allows greater focus on the content; you no longer have to worry about closing tags
