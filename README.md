@@ -1,4 +1,4 @@
-<img src="logo.svg" width=100%>
+<img src="https://drive.google.com/uc?id=0B6mzoH5Nz4ApUVQ5emRudGRYWTg" width=100%>
 # Lispy HyperText Markup
 Lhtm is a markup language that targets HTML. It is based on Lisp's [s-expressions](https://en.wikipedia.org/wiki/S-expression "relevant Wikipedia article"). Assuming you're already familiar with HTML, here's a little taste of Lhtm:
 ```lisp
