@@ -1,5 +1,6 @@
+<img src="logo.svg" width=100%>
 # Lispy HyperText Markup
-Lhtm [transpiles](https://en.wikipedia.org/wiki/Source-to-source_compiler#/Programming_language_implementations "another relevant Wikipedia article") [s-expressions](https://en.wikipedia.org/wiki/S-expression "relevant Wikipedia article") to HTML. Assuming you're already familiar with HTML, here's a little taste :
+Lhtm is a markup language that targets HTML. It is based on Lisp's [s-expressions](https://en.wikipedia.org/wiki/S-expression "relevant Wikipedia article"). Assuming you're already familiar with HTML, here's a little taste of Lhtm:
 ```lisp
 ; comments with one semicolon are excluded from the HTML output
 ;; comments with two semicolons are included in the HTML output
@@ -19,7 +20,7 @@ Lhtm [transpiles](https://en.wikipedia.org/wiki/Source-to-source_compiler#/Progr
     ; text content can span multiple lines and you can use the newline escape sequence ('\n')
     (p 'In Lhtm,
     Text can span multiple lines.\nThis is on its own line.')
-    'You can have text here even if there are tags before it'))
+    'You can have text content after a tag'))
 ```
 Note that I shouldn't really call this a 'little taste', because this is really the entire meal. Yes, that's literally all there is to Lhtm. Yep, you already know it.
 
