@@ -1,11 +1,10 @@
-<img src="https://drive.google.com/uc?id=0B6mzoH5Nz4ApUVQ5emRudGRYWTg" width=100%>
 # Lispy HyperText Markup
 Lhtm is a markup language that targets HTML. It is based on Lisp's [s-expressions](https://en.wikipedia.org/wiki/S-expression "relevant Wikipedia article"). Assuming you're already familiar with HTML, here's a little taste of Lhtm:
 ```lisp
 ; comments with one semicolon are excluded from the HTML output
 ;; comments with two semicolons are included in the HTML output
 
-; the hashtag-style declaration is just syntactic sugar, you can write (\!DOCTYLE html) too
+; the hashtag-style declaration is just syntactic sugar, you can write (\!DOCTYPE html) too
 #doctype html
 (html
   (head
