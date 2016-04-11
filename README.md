@@ -8,18 +8,19 @@ Lhtm is a markup language that targets HTML. It is based on Lisp's [s-expression
 #doctype html
 (html
   (head
-    (title 'Yo!')
+    (title "Yo!")
 
     ; a leading backslash is used for empty elements
-    (\meta [name 'description' content 'Sexped up HTML.']))
+    (\meta [name "description" content "Sexped up HTML."]))
   (body
     ; you put the element's text content within single or double quotes
     ; single quotes are preferred
-    (h1 'This is the content')
+    (h1 "This is the content")
     ; text content can span multiple lines and you can use the newline escape sequence ('\n')
-    (p 'In Lhtm,
-    Text can span multiple lines.\nThis is on its own line.')
-    'You can have text content after a tag'))
+    (p "In Lhtm,
+    Text can span multiple lines.\nThis is on its own line.")
+    "You can have text content after a tag"
+    "These will be concatenated with the previous line"))
 ```
 Note that I shouldn't really call this a 'little taste', because this is really the entire meal. Yes, that's literally all there is to Lhtm. Yep, you already know it.
 
