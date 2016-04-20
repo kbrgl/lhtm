@@ -1,0 +1,21 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    concurrent-ruby (1.0.1)
+    hamster (3.0.0)
+      concurrent-ruby (~> 1.0)
+    link_header (0.0.8)
+    rdf (2.0.0)
+      hamster (~> 3.0)
+      link_header (~> 0.0, >= 0.0.8)
+    sxp (1.0.0)
+      rdf (~> 2.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  sxp
+
+BUNDLED WITH
+   1.11.2
