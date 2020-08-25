@@ -1,19 +1,54 @@
-; comments with one semicolon are excluded from the HTML output
-;; comments with two semicolons are included in the HTML output
+; comments with one semicolon are included in the HTML output
+;; comments with two semicolons are excluded from the HTML output
 
-; the hashtag-style declaration is just syntactic sugar, you can write (\!DOCTYPE html) too
-#doctype html
+;; compiler enforces tab-based indentation
+;; compiled HTML code uses 4 spaces
+;; no line length is enforced
+
+;; basic definitions are supported and expanded at compile time
+(def @navbar [website-name links]
+	(div ['class "navbar"]
+		(nav
+			(foreach ['link links]
+				(a ['href link] "a link")))))
+
+;; <!DOCTYPE html> will be automatically added if omitted.
+;; must be the first line of the document
+(\!DOCTYPE ['html true])
 (html
-  (head
-    (title "Yo!")
+	(head
+		(title "LHTM")
 
-    ; a leading backslash is used for empty elements
-    (\meta [name "description" content "sexped up HTML." something nil somethingelse true]))
-  (body
-    ; you put the element's text content within single or double quotes
-    ; single quotes are preferred
-    (h1 "This is the content")
-    ; text content can span multiple lines and you can use the newline escape sequence ('\n')
-    (p "In Lhtm,
-    Text can span multiple lines.\nThis is on its own line.")
-    "You can have text content after a tag"))
+		;; a leading backslash is used for empty elements
+		(\meta ['name "description" 'content "sexped up HTML."]))
+	(body
+		(@navbar "My webpage" ["https://google.com/"])
+		;; you put the element's text content within single or double quotes
+		;; double quotes are preferred
+		(h1 "This is the content")
+		;; text content can span multiple lines and you can use the newline escape sequence ('\n')
+		(p "In LHTM,
+		    Text can span multiple lines.\nThis is on its own line.")
+		"You can have more text content after a tag"))
+
+;; This is compiled to the following:
+;; <!-- comments with one semicolon are included in the HTML output -->
+;; <!DOCTYPE html />
+;; <html>
+;;     <head>
+;;         <title>LHTM</title>
+;;         <meta name="description" content="sexped up HTML." />
+;;     </head>
+;;     <body>
+;;         <div class="navbar">
+;;             <nav>
+;;                 <a href="https://google.com/">a link</a>
+;;             </nav>
+;;         </div>
+;;         <h1>This is the content</h1>
+;;         <p>In LHTM,
+;;         Text can span multiple lines.
+;;         This is on its own line.</p>
+;;         You can have more text content after a tag
+;;     </body>
+;; </html>
