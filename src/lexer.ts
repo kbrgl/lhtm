@@ -28,7 +28,7 @@ type StateFunction =
   | null;
 
 class Lexer {
-  static EOF = "\0";
+  static EOF = "";
 
   blob: string;
   cursor: number;
@@ -71,7 +71,7 @@ class Lexer {
   static matches(ch: string, pattern: string | RegExp) {
     return (
       (pattern instanceof RegExp && pattern.test(ch)) ||
-      (typeof pattern === "string" && pattern.includes(ch))
+      (typeof pattern === "string" && ch !== "" && pattern.includes(ch))
     );
   }
 
@@ -185,11 +185,7 @@ const lexComment: StateFunction = function* (l: Lexer) {
   }
 
   // Consume the rest of the comment.
-  while (!l.eof()) {
-    if (!l.accept(/[^\n]/)) {
-      break;
-    }
-  }
+  while (!l.eof() && l.accept(/[^\n]/));
 
   if (html) {
     yield LexemeType.HTMLComment;
