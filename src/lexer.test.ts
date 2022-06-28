@@ -1,8 +1,9 @@
-import { lex, lexeme, LexemeType } from "./lexer.ts";
+import { deadline } from "https://deno.land/std@0.145.0/async/deadline.ts";
 import {
   assertEquals,
   assertThrows,
 } from "https://deno.land/std@0.145.0/testing/asserts.ts";
+import { lex, lexeme, LexemeType } from "./lexer.ts";
 
 Deno.test({
   name: "simple S-expression with only identifiers",
@@ -94,3 +95,12 @@ Deno.test({
     assertThrows(() => lex("(define x %%)"));
   },
 });
+
+// Deno.test({
+//   name: "unterminated string literal",
+//   fn: () => {
+//     assertThrows(() => {
+//       lex('("ay bee cee');
+//     });
+//   },
+// });
