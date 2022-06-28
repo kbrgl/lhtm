@@ -95,15 +95,11 @@ Deno.test({
   },
 });
 
-// FIXME: Failing test.
-// Commented out because it runs indefinitely due to a while loop,
-// locking up the test runner.
-//
-// Deno.test({
-//   name: "unterminated string literal",
-//   fn: () => {
-//     assertThrows(() => {
-//       lex('("ay bee cee');
-//     });
-//   },
-// });
+Deno.test({
+  name: "unterminated string literal",
+  fn: () => {
+    assertThrows(() => {
+      lex('("x');
+    });
+  },
+});

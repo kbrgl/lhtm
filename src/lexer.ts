@@ -28,7 +28,7 @@ type StateFunction =
   | null;
 
 class Lexer {
-  static EOF = "";
+  static EOF = "\0";
 
   blob: string;
   cursor: number;
@@ -68,14 +68,11 @@ class Lexer {
     return result;
   }
 
-  static matches(ch: string, pattern: string | RegExp) {
-    return (
-      (pattern instanceof RegExp && pattern.test(ch)) ||
-      (typeof pattern === "string" && ch !== "" && pattern.includes(ch))
-    );
+  static matches(ch: string, pattern: string) {
+    return pattern.includes(ch);
   }
 
-  accept(pattern: string | RegExp) {
+  accept(pattern: string) {
     const ch = this.next();
     if (Lexer.matches(ch, pattern)) {
       return true;
@@ -84,7 +81,7 @@ class Lexer {
     return false;
   }
 
-  acceptRun(pattern: string | RegExp) {
+  acceptRun(pattern: string) {
     while (Lexer.matches(this.next(), pattern));
     this.backup();
   }
@@ -115,7 +112,7 @@ class Lexer {
     }
   }
 
-  assert(pattern: string | RegExp) {
+  assert(pattern: string) {
     if (!this.accept(pattern)) {
       this.error(`expected ${pattern.toString()}`);
     }
@@ -126,18 +123,22 @@ class Lexer {
   }
 }
 
-const Sentinels = {
-  NUMBER_START: /[+\-0-9]/,
-  IDENTIFIER_START: /[_a-zA-Z,@]/,
-  WHITESPACE: /\s/,
-  STRING_START: `'"\``,
-};
+const ALPHA = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const DIGIT = "0123456789";
+const ALPHANUMERIC =
+  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const WHITESPACE = " \t\n\r";
+const HEX_DIGIT = "0123456789abcdefABCDEF";
+const NUMBER_START = `+\-${DIGIT}`;
+const IDENTIFIER_START = `${ALPHA}_,@$`;
+const IDENTIFIER = `${ALPHANUMERIC}_,:\-`;
+const STRING_START = `'"\``;
 
 const lexNumber: StateFunction = function* (l: Lexer) {
-  let digits = "1234567890";
+  let digits = DIGIT;
   l.accept("+-");
   if (l.accept("0") && l.accept("x")) {
-    digits = "123456789abcdefABCDEF";
+    digits = HEX_DIGIT;
   }
   l.accept(digits);
 
@@ -155,25 +156,27 @@ const lexNumber: StateFunction = function* (l: Lexer) {
 };
 
 const lexIdentifier: StateFunction = function* (l: Lexer) {
-  l.accept(Sentinels.IDENTIFIER_START);
-  l.acceptRun(/[_a-zA-Z0-9,:\-]/);
+  l.accept(IDENTIFIER_START);
+  l.acceptRun(IDENTIFIER);
   yield LexemeType.Identifier;
   return lexDefault;
 };
 
 const lexString: StateFunction = function* (l: Lexer) {
-  const quoteType = l.next();
-  while (true) {
-    l.acceptRun(new RegExp(`[^${quoteType}\\\\]`));
-    if (l.accept(quoteType)) {
-      break;
-    }
+  const quoteType = l.next()!;
+  while (!l.eof()) {
     if (l.accept("\\")) {
       l.next();
+      continue;
     }
+    if (l.accept(quoteType)) {
+      yield LexemeType.String;
+      return lexDefault;
+    }
+    l.next();
   }
-  yield LexemeType.String;
-  return lexDefault;
+  l.error("unterminated string");
+  return null;
 };
 
 const lexComment: StateFunction = function* (l: Lexer) {
@@ -185,7 +188,10 @@ const lexComment: StateFunction = function* (l: Lexer) {
   }
 
   // Consume the rest of the comment.
-  while (!l.eof() && l.accept(/[^\n]/));
+  while (!l.eof() && l.next() !== "\n");
+  if (!l.eof()) {
+    l.backup();
+  }
 
   if (html) {
     yield LexemeType.HTMLComment;
@@ -208,15 +214,15 @@ const lexDefault: StateFunction = function* (l: Lexer) {
     } else if (curr == ";") {
       l.backup();
       return lexComment;
-    } else if (Lexer.matches(curr, Sentinels.NUMBER_START)) {
+    } else if (Lexer.matches(curr, NUMBER_START)) {
       l.backup();
       return lexNumber;
-    } else if (Lexer.matches(curr, Sentinels.STRING_START)) {
+    } else if (Lexer.matches(curr, STRING_START)) {
       l.backup();
       return lexString;
-    } else if (Lexer.matches(curr, Sentinels.WHITESPACE)) {
+    } else if (Lexer.matches(curr, WHITESPACE)) {
       l.ignore();
-    } else if (Lexer.matches(curr, Sentinels.IDENTIFIER_START)) {
+    } else if (Lexer.matches(curr, IDENTIFIER_START)) {
       l.backup();
       return lexIdentifier;
     } else {
