@@ -127,7 +127,7 @@ class Lexer {
 }
 
 const Sentinels = {
-  NUMBER_START: /[+-0-9]/,
+  NUMBER_START: /[+\-0-9]/,
   IDENTIFIER_START: /[_a-zA-Z,@]/,
   WHITESPACE: /\s/,
   STRING_START: `'"\``,
@@ -137,7 +137,7 @@ const lexNumber: StateFunction = function* (l: Lexer) {
   let digits = "1234567890";
   l.accept("+-");
   if (l.accept("0") && l.accept("x")) {
-    digits = "123456789abcdef";
+    digits = "123456789abcdefABCDEF";
   }
   l.accept(digits);
 
@@ -164,7 +164,7 @@ const lexIdentifier: StateFunction = function* (l: Lexer) {
 const lexString: StateFunction = function* (l: Lexer) {
   const quoteType = l.next();
   while (true) {
-    l.acceptRun(new RegExp(`[^${quoteType}\\]`));
+    l.acceptRun(new RegExp(`[^${quoteType}\\\\]`));
     if (l.accept(quoteType)) {
       break;
     }
@@ -178,11 +178,13 @@ const lexString: StateFunction = function* (l: Lexer) {
 
 const lexComment: StateFunction = function* (l: Lexer) {
   l.accept(";");
+  // The second ; turns this into an HTML comment.
   let html = false;
   if (l.accept(";")) {
     html = true;
   }
 
+  // Consume the rest of the comment.
   while (!l.eof()) {
     if (!l.accept(/[^\n]/)) {
       break;
@@ -208,14 +210,18 @@ const lexDefault: StateFunction = function* (l: Lexer) {
     } else if (curr == ")") {
       yield LexemeType.RParen;
     } else if (curr == ";") {
+      l.backup();
       return lexComment;
     } else if (l.matches(curr, Sentinels.NUMBER_START)) {
+      l.backup();
       return lexNumber;
     } else if (l.matches(curr, Sentinels.STRING_START)) {
+      l.backup();
       return lexString;
     } else if (l.matches(curr, Sentinels.WHITESPACE)) {
       l.ignore();
     } else if (l.matches(curr, Sentinels.IDENTIFIER_START)) {
+      l.backup();
       return lexIdentifier;
     } else {
       l.error(`unexpected ${curr}`);
