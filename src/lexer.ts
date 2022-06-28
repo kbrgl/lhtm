@@ -68,7 +68,7 @@ class Lexer {
     return result;
   }
 
-  matches(ch: string, pattern: string | RegExp) {
+  static matches(ch: string, pattern: string | RegExp) {
     return (
       (pattern instanceof RegExp && pattern.test(ch)) ||
       (typeof pattern === "string" && pattern.includes(ch))
@@ -77,7 +77,7 @@ class Lexer {
 
   accept(pattern: string | RegExp) {
     const ch = this.next();
-    if (this.matches(ch, pattern)) {
+    if (Lexer.matches(ch, pattern)) {
       return true;
     }
     this.backup();
@@ -85,7 +85,7 @@ class Lexer {
   }
 
   acceptRun(pattern: string | RegExp) {
-    while (this.matches(this.next(), pattern));
+    while (Lexer.matches(this.next(), pattern));
     this.backup();
   }
 
@@ -212,15 +212,15 @@ const lexDefault: StateFunction = function* (l: Lexer) {
     } else if (curr == ";") {
       l.backup();
       return lexComment;
-    } else if (l.matches(curr, Sentinels.NUMBER_START)) {
+    } else if (Lexer.matches(curr, Sentinels.NUMBER_START)) {
       l.backup();
       return lexNumber;
-    } else if (l.matches(curr, Sentinels.STRING_START)) {
+    } else if (Lexer.matches(curr, Sentinels.STRING_START)) {
       l.backup();
       return lexString;
-    } else if (l.matches(curr, Sentinels.WHITESPACE)) {
+    } else if (Lexer.matches(curr, Sentinels.WHITESPACE)) {
       l.ignore();
-    } else if (l.matches(curr, Sentinels.IDENTIFIER_START)) {
+    } else if (Lexer.matches(curr, Sentinels.IDENTIFIER_START)) {
       l.backup();
       return lexIdentifier;
     } else {
