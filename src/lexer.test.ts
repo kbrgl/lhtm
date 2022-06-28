@@ -1,4 +1,3 @@
-import { deadline } from "https://deno.land/std@0.145.0/async/deadline.ts";
 import {
   assertEquals,
   assertThrows,
@@ -96,6 +95,10 @@ Deno.test({
   },
 });
 
+// FIXME: Failing test.
+// Commented out because it runs indefinitely due to a while loop,
+// locking up the test runner.
+//
 // Deno.test({
 //   name: "unterminated string literal",
 //   fn: () => {
