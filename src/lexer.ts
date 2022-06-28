@@ -129,11 +129,8 @@ const ALPHANUMERIC =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const WHITESPACE = " \t\n\r";
 const HEX_DIGIT = "0123456789abcdefABCDEF";
-const NUMBER_START = `+\-${DIGIT}`;
-const IDENTIFIER_START = `${ALPHA}_,@$`;
-const IDENTIFIER = `${ALPHANUMERIC}_,:\-`;
-const STRING_START = `'"\``;
 
+const NUMBER_START = `+\-${DIGIT}`;
 const lexNumber: StateFunction = function* (l: Lexer) {
   let digits = DIGIT;
   l.accept("+-");
@@ -155,6 +152,8 @@ const lexNumber: StateFunction = function* (l: Lexer) {
   return lexDefault;
 };
 
+const IDENTIFIER_START = `${ALPHA}_,@$`;
+const IDENTIFIER = `${ALPHANUMERIC}_,:\-`;
 const lexIdentifier: StateFunction = function* (l: Lexer) {
   l.accept(IDENTIFIER_START);
   l.acceptRun(IDENTIFIER);
@@ -162,6 +161,7 @@ const lexIdentifier: StateFunction = function* (l: Lexer) {
   return lexDefault;
 };
 
+const STRING_START = `'"\``;
 const lexString: StateFunction = function* (l: Lexer) {
   const quoteType = l.next()!;
   while (!l.eof()) {
