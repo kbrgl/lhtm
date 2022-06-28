@@ -45,16 +45,13 @@ class Lexer {
   }
 
   next() {
-    this.cursor += 1;
     if (this.eof()) {
       return Lexer.EOF;
     } else {
-      return this.blob[this.cursor];
+      const ch = this.blob[this.cursor];
+      this.cursor += 1;
+      return ch;
     }
-  }
-
-  current() {
-    return this.blob[this.cursor];
   }
 
   backup() {
@@ -71,24 +68,25 @@ class Lexer {
     return result;
   }
 
-  match(s: string | RegExp) {
-    const char = this.current();
+  matches(ch: string, pattern: string | RegExp) {
     return (
-      (s instanceof RegExp && s.test(char)) ||
-      (typeof s === "string" && s.includes(char))
+      (pattern instanceof RegExp && pattern.test(ch)) ||
+      (typeof pattern === "string" && pattern.includes(ch))
     );
   }
 
-  consume(s: string | RegExp) {
-    if (this.match(s)) {
-      this.next();
+  accept(pattern: string | RegExp) {
+    const ch = this.next();
+    if (this.matches(ch, pattern)) {
       return true;
     }
+    this.backup();
     return false;
   }
 
-  consumeRun(s: string | RegExp) {
-    while (this.consume(s));
+  acceptRun(pattern: string | RegExp) {
+    while (this.matches(this.next(), pattern));
+    this.backup();
   }
 
   ignore() {
@@ -117,9 +115,9 @@ class Lexer {
     }
   }
 
-  assert(s: string | RegExp) {
-    if (!this.consume(s)) {
-      this.error(`expected ${s.toString()}`);
+  assert(pattern: string | RegExp) {
+    if (!this.accept(pattern)) {
+      this.error(`expected ${pattern.toString()}`);
     }
   }
 
@@ -137,28 +135,28 @@ const Sentinels = {
 
 const lexNumber: StateFunction = function* (l: Lexer) {
   let digits = "1234567890";
-  l.consume("+-");
-  if (l.consume("0") && l.consume("x")) {
+  l.accept("+-");
+  if (l.accept("0") && l.accept("x")) {
     digits = "123456789abcdef";
   }
-  l.consume(digits);
+  l.accept(digits);
 
-  // Allow underscores after the first digit has been consumed.
+  // Allow underscores after the first digit has been acceptd.
   digits += "_";
-  l.consumeRun(digits);
+  l.acceptRun(digits);
 
-  if (l.consume(".")) {
+  if (l.accept(".")) {
     l.assert(digits);
   }
-  l.consumeRun(digits);
+  l.acceptRun(digits);
 
   yield LexemeType.Number;
   return lexDefault;
 };
 
 const lexIdentifier: StateFunction = function* (l: Lexer) {
-  l.consume(Sentinels.IDENTIFIER_START);
-  l.consumeRun(/[_a-zA-Z0-9,:\-]/);
+  l.accept(Sentinels.IDENTIFIER_START);
+  l.acceptRun(/[_a-zA-Z0-9,:\-]/);
   yield LexemeType.Identifier;
   return lexDefault;
 };
@@ -166,11 +164,11 @@ const lexIdentifier: StateFunction = function* (l: Lexer) {
 const lexString: StateFunction = function* (l: Lexer) {
   const quoteType = l.next();
   while (true) {
-    l.consumeRun(new RegExp(`[^${quoteType}\\]`));
-    if (l.consume(quoteType)) {
+    l.acceptRun(new RegExp(`[^${quoteType}\\]`));
+    if (l.accept(quoteType)) {
       break;
     }
-    if (l.consume("\\")) {
+    if (l.accept("\\")) {
       l.next();
     }
   }
@@ -179,14 +177,14 @@ const lexString: StateFunction = function* (l: Lexer) {
 };
 
 const lexComment: StateFunction = function* (l: Lexer) {
-  l.consume(";");
+  l.accept(";");
   let html = false;
-  if (l.consume(";")) {
+  if (l.accept(";")) {
     html = true;
   }
 
   while (!l.eof()) {
-    if (!l.consume(/[^\n]/)) {
+    if (!l.accept(/[^\n]/)) {
       break;
     }
   }
@@ -201,25 +199,26 @@ const lexComment: StateFunction = function* (l: Lexer) {
 
 const lexDefault: StateFunction = function* (l: Lexer) {
   while (true) {
-    if (l.current() === Lexer.EOF) {
+    const curr = l.next();
+    if (curr === Lexer.EOF) {
       yield LexemeType.EOF;
       break;
-    } else if (l.consume("(")) {
+    } else if (curr == "(") {
       yield LexemeType.LParen;
-    } else if (l.consume(")")) {
+    } else if (curr == ")") {
       yield LexemeType.RParen;
-    } else if (l.consume(";")) {
+    } else if (curr == ";") {
       return lexComment;
-    } else if (l.match(Sentinels.NUMBER_START)) {
+    } else if (l.matches(curr, Sentinels.NUMBER_START)) {
       return lexNumber;
-    } else if (l.match(Sentinels.STRING_START)) {
+    } else if (l.matches(curr, Sentinels.STRING_START)) {
       return lexString;
-    } else if (l.consume(Sentinels.WHITESPACE)) {
+    } else if (l.matches(curr, Sentinels.WHITESPACE)) {
       l.ignore();
-    } else if (l.match(Sentinels.IDENTIFIER_START)) {
+    } else if (l.matches(curr, Sentinels.IDENTIFIER_START)) {
       return lexIdentifier;
     } else {
-      l.error(`unexpected ${l.current()}`);
+      l.error(`unexpected ${curr}`);
       break;
     }
   }
