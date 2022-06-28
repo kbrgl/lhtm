@@ -1,7 +1,23 @@
-import { lex, LexemeType } from "./lexer.ts";
+import { lex, LexemeType, Lexeme } from "./lexer.ts";
 
-type Expression = number | string | boolean | null;
-type SExpression = Expression | SExpression[];
+export type Node = Lexeme;
+type Tree = Node | Tree[];
+
+export function node(type: LexemeType, value: string): Node {
+  return {
+    type,
+    value,
+  };
+}
+
+function getTreePath(tree: Tree[], path: number[]): Tree[] {
+  if (path.length === 0) {
+    return tree;
+  } else {
+    const [head, ...tail] = path;
+    return getTreePath(tree[head] as Tree[], tail);
+  }
+}
 
 /**
  * Parses a string into an S-Expression.
@@ -9,29 +25,33 @@ type SExpression = Expression | SExpression[];
  * @returns The S-Expression.
  * @throws Throws an error if the blob is not a valid S-Expression.
  */
-export function parse(blob: string): SExpression {
+export function parse(blob: string): Tree {
   const lexemes = lex(blob);
-  const ast: SExpression = [];
-  const location: number[] = []; // Stack of positions in the AST.
+  const tree: Tree = [];
+  const path: number[] = []; // Stack of positions in the AST.
+
   for (const lxm of lexemes) {
     switch (lxm.type) {
       case LexemeType.LParen:
-        location.push(ast.length);
-        ast.push([]);
+        getTreePath(tree, path).push([]);
+        path.push(getTreePath(tree, path)!.length - 1);
         break;
       case LexemeType.RParen: {
-        if (location.length === 0) {
+        if (path.length === 0) {
           throw new Error("Unexpected ')'");
         }
-        location.pop()!;
+        path.pop()!;
         break;
       }
       case LexemeType.EOF:
         break;
+      case LexemeType.Comment:
+      case LexemeType.HTMLComment:
+        break;
       default:
-        throw new Error("not implemented");
+        getTreePath(tree, path)!.push(lxm);
     }
   }
 
-  return ast;
+  return tree;
 }
