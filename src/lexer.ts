@@ -245,6 +245,12 @@ const lexDefault: StateFunction = function* (l: Lexer) {
       yield NodeType.LBracket;
     } else if (curr == "]") {
       yield NodeType.RBracket;
+    } else if (curr == ",") {
+      yield NodeType.Comma;
+    } else if (curr == "'") {
+      yield NodeType.Quote;
+    } else if (curr == "`") {
+      yield NodeType.Quasiquote;
     } else if (curr == ";") {
       l.backup();
       return lexComment;

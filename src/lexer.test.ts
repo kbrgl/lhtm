@@ -183,3 +183,17 @@ Deno.test({
     ]);
   },
 });
+
+Deno.test({
+  name: "symbols",
+  fn: () => {
+    assertEquals(lex("(define x 'y)"), [
+      node(NodeType.LParen, "("),
+      node(NodeType.Identifier, "define"),
+      node(NodeType.Identifier, "x"),
+      node(NodeType.Symbol, "'y"),
+      node(NodeType.RParen, ")"),
+      node(NodeType.EOF, ""),
+    ]);
+  },
+});
