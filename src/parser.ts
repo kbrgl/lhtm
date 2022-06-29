@@ -1,14 +1,7 @@
-import { lex, LexemeType, Lexeme } from "./lexer.ts";
+import { lex } from "./lexer.ts";
+import { NodeType, Node } from "./node.ts";
 
-export type Node = Lexeme;
 type Tree = Node | Tree[];
-
-export function node(type: LexemeType, value: string): Node {
-  return {
-    type,
-    value,
-  };
-}
 
 function getTreePath(tree: Tree[], path: number[]): Tree[] {
   if (path.length === 0) {
@@ -32,21 +25,21 @@ export function parse(blob: string): Tree {
 
   for (const lxm of lexemes) {
     switch (lxm.type) {
-      case LexemeType.LParen:
+      case NodeType.LParen:
         getTreePath(tree, path).push([]);
         path.push(getTreePath(tree, path)!.length - 1);
         break;
-      case LexemeType.RParen: {
+      case NodeType.RParen: {
         if (path.length === 0) {
           throw new Error("Unexpected ')'");
         }
         path.pop()!;
         break;
       }
-      case LexemeType.EOF:
+      case NodeType.EOF:
         break;
-      case LexemeType.Comment:
-      case LexemeType.HTMLComment:
+      case NodeType.Comment:
+      case NodeType.HTMLComment:
         break;
       default:
         getTreePath(tree, path)!.push(lxm);

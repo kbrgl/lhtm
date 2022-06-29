@@ -1,6 +1,6 @@
 import { assertEquals } from "https://deno.land/std@0.145.0/testing/asserts.ts";
 import { parse } from "./parser.ts";
-import { lexeme, LexemeType } from "./lexer.ts";
+import { node, NodeType } from "./node.ts";
 
 Deno.test({
   name: "simple",
@@ -12,7 +12,7 @@ Deno.test({
 Deno.test({
   name: "number",
   fn: () => {
-    assertEquals(parse("(1)"), [[lexeme(LexemeType.Number, "1")]]);
+    assertEquals(parse("(1)"), [[node(NodeType.Number, "1")]]);
   },
 });
 
@@ -28,10 +28,10 @@ Deno.test({
   fn: () => {
     assertEquals(parse("(1 2 (3 4) 5)"), [
       [
-        lexeme(LexemeType.Number, "1"),
-        lexeme(LexemeType.Number, "2"),
-        [lexeme(LexemeType.Number, "3"), lexeme(LexemeType.Number, "4")],
-        lexeme(LexemeType.Number, "5"),
+        node(NodeType.Number, "1"),
+        node(NodeType.Number, "2"),
+        [node(NodeType.Number, "3"), node(NodeType.Number, "4")],
+        node(NodeType.Number, "5"),
       ],
     ]);
   },
@@ -42,10 +42,10 @@ Deno.test({
   fn: () => {
     assertEquals(parse("(1 2 (3 4) 5) ; comment"), [
       [
-        lexeme(LexemeType.Number, "1"),
-        lexeme(LexemeType.Number, "2"),
-        [lexeme(LexemeType.Number, "3"), lexeme(LexemeType.Number, "4")],
-        lexeme(LexemeType.Number, "5"),
+        node(NodeType.Number, "1"),
+        node(NodeType.Number, "2"),
+        [node(NodeType.Number, "3"), node(NodeType.Number, "4")],
+        node(NodeType.Number, "5"),
       ],
     ]);
   },

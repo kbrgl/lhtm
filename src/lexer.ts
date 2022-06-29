@@ -1,30 +1,7 @@
-export enum LexemeType {
-  LParen = "LParen",
-  RParen = "RParen",
-  Number = "Number",
-  String = "String",
-  Identifier = "Identifier",
-  EOF = "EOF",
-  Comment = "Comment",
-  HTMLComment = "HTMLComment",
-}
-
-export type LexemeValue = string | null;
-
-export interface Lexeme {
-  type: LexemeType;
-  value: LexemeValue;
-}
-
-export function lexeme(type: LexemeType, value: LexemeValue = null): Lexeme {
-  return {
-    type,
-    value,
-  };
-}
+import { node, Node, NodeType } from "./node.ts";
 
 type StateFunction =
-  | ((l: Lexer) => Generator<LexemeType, StateFunction, undefined>)
+  | ((l: Lexer) => Generator<NodeType, StateFunction, undefined>)
   | null;
 
 class Lexer {
@@ -90,8 +67,8 @@ class Lexer {
     this.start = this.cursor;
   }
 
-  emit(lexemeType: LexemeType) {
-    const result = lexeme(lexemeType, this.value());
+  emit(lexemeType: NodeType) {
+    const result = node(lexemeType, this.value());
     this.start = this.cursor;
     return result;
   }
@@ -103,7 +80,7 @@ class Lexer {
       while (!item.done) {
         const { value: lexemeType } = item;
 
-        // Emit this lexeme and move the cursor.
+        // Emit this node and move the cursor.
         yield this.emit(lexemeType);
 
         item = emitter.next();
@@ -148,7 +125,7 @@ const lexNumber: StateFunction = function* (l: Lexer) {
   }
   l.acceptRun(digits);
 
-  yield LexemeType.Number;
+  yield NodeType.Number;
   return lexDefault;
 };
 
@@ -157,7 +134,7 @@ const IDENTIFIER = `${ALPHANUMERIC}_,:\-`;
 const lexIdentifier: StateFunction = function* (l: Lexer) {
   l.accept(IDENTIFIER_START);
   l.acceptRun(IDENTIFIER);
-  yield LexemeType.Identifier;
+  yield NodeType.Identifier;
   return lexDefault;
 };
 
@@ -170,7 +147,7 @@ const lexString: StateFunction = function* (l: Lexer) {
       continue;
     }
     if (l.accept(quoteType)) {
-      yield LexemeType.String;
+      yield NodeType.String;
       return lexDefault;
     }
     l.next();
@@ -194,9 +171,9 @@ const lexComment: StateFunction = function* (l: Lexer) {
   }
 
   if (html) {
-    yield LexemeType.HTMLComment;
+    yield NodeType.HTMLComment;
   } else {
-    yield LexemeType.Comment;
+    yield NodeType.Comment;
   }
   return lexDefault;
 };
@@ -205,12 +182,16 @@ const lexDefault: StateFunction = function* (l: Lexer) {
   while (true) {
     const curr = l.next();
     if (curr === Lexer.EOF) {
-      yield LexemeType.EOF;
+      yield NodeType.EOF;
       break;
     } else if (curr == "(") {
-      yield LexemeType.LParen;
+      yield NodeType.LParen;
     } else if (curr == ")") {
-      yield LexemeType.RParen;
+      yield NodeType.RParen;
+    } else if (curr == "[") {
+      yield NodeType.LBracket;
+    } else if (curr == "]") {
+      yield NodeType.RBracket;
     } else if (curr == ";") {
       l.backup();
       return lexComment;
@@ -233,7 +214,7 @@ const lexDefault: StateFunction = function* (l: Lexer) {
   return null;
 };
 
-export function lex(blob: string): Lexeme[] {
+export function lex(blob: string): Node[] {
   const l = new Lexer(blob);
   return Array.from(l.run(lexDefault));
 }
