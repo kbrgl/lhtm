@@ -9,6 +9,10 @@ export enum NodeType {
   HTMLComment = "HTMLComment",
   LBracket = "LBracket",
   RBracket = "RBracket",
+  Symbol = "Symbol",
+  Comma = "Comma",
+  Quote = "Quote",
+  Quasiquote = "Quasiquote",
 }
 
 export type NodeValue = string | null;
