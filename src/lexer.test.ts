@@ -93,7 +93,7 @@ Deno.test({
 Deno.test({
   name: "invalid input",
   fn: () => {
-    assertThrows(() => lex("(define x %%)"));
+    assertThrows(() => lex("(define x !#FDF)"));
   },
 });
 
@@ -162,6 +162,9 @@ Deno.test({
   fn: () => {
     assertThrows(() => {
       lex("(''134e6) ; comment");
+    });
+    assertThrows(() => {
+      lex("(''sdf)");
     });
   },
 });

@@ -32,6 +32,9 @@ class Lexer {
   }
 
   backup() {
+    if (this.cursor <= 0) {
+      throw new Error("cannot backup before the start of the blob");
+    }
     this.cursor -= 1;
   }
 
@@ -63,6 +66,10 @@ class Lexer {
     this.backup();
   }
 
+  width() {
+    return this.cursor - this.start;
+  }
+
   ignore() {
     this.start = this.cursor;
   }
@@ -89,34 +96,60 @@ class Lexer {
     }
   }
 
-  assert(pattern: string) {
+  assert(pattern: string, message = "") {
     if (!this.accept(pattern)) {
-      this.error(`expected ${pattern.toString()}`);
+      const prettyPattern = pattern
+        .replaceAll("\n", "\\n")
+        .replaceAll("\r", "\\r")
+        .replaceAll("\t", "\\t");
+      this.error(message || `expected one of >>>${prettyPattern}<<<`);
     }
   }
 
   error(message: string) {
-    throw new Error(message);
+    const relevant = this.blob.slice(this.start, this.cursor);
+    throw new Error(`${message} at >>>${relevant}<<<`);
   }
 }
 
 const ALPHA = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const DIGIT = "0123456789";
-const ALPHANUMERIC =
-  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+// deno-lint-ignore no-unused-vars
+const ALPHANUMERIC = `${ALPHA}0123456789`;
 const WHITESPACE = " \t\n\r";
 const HEX_DIGIT = "0123456789abcdefABCDEF";
+const BIN_DIGIT = "01";
+const SEPARATOR = `()${WHITESPACE}[];`;
 
-const NUMBER_START = `+\-${DIGIT}`;
+const expectSeparator = (l: Lexer) => {
+  if (!l.eof()) {
+    l.assert(SEPARATOR);
+    l.backup();
+  }
+};
+
+const NUMBER_START_NONDIGIT = `+\-#`;
+const NUMBER_START = `${NUMBER_START_NONDIGIT}${DIGIT}`;
+/**
+ * Lex out a number.
+ * Valid numbers are:
+ * - decimal numbers (e.g. `1`, `1.2`, `-1.2`)
+ * - hexadecimal numbers (e.g. `#xfF1`, `-#x035a`)
+ * - binary numbers (e.g. `#b101`)
+ */
 const lexNumber: StateFunction = function* (l: Lexer) {
   let digits = DIGIT;
   l.accept("+-");
-  if (l.accept("0") && l.accept("x")) {
-    digits = HEX_DIGIT;
+  if (l.accept("#")) {
+    if (l.accept("x")) {
+      digits = HEX_DIGIT;
+    } else if (l.accept("b")) {
+      digits = BIN_DIGIT;
+    }
   }
   l.accept(digits);
 
-  // Allow underscores after the first digit has been acceptd.
+  // Allow underscores after the first digit has been accepted.
   digits += "_";
   l.acceptRun(digits);
 
@@ -124,21 +157,41 @@ const lexNumber: StateFunction = function* (l: Lexer) {
     l.assert(digits);
   }
   l.acceptRun(digits);
+  l.backup();
+  if (l.next() === "_") {
+    l.error("no underscores allowed at the end of a number");
+  }
+
+  // Disambiguate numbers and identifiers.
+  // + and - are identifiers on their own.
+  if (l.width() === 1) {
+    l.backup();
+    if (l.accept("+-")) {
+      l.backup();
+      return lexIdentifier;
+    }
+    l.next();
+  }
+
+  // A number needs to be followed by an unambiguous separator.
+  // If this were not the case, 12345abcd would be parsed as a
+  // number followed by an identifier.
+  expectSeparator(l);
 
   yield NodeType.Number;
   return lexDefault;
 };
 
-const IDENTIFIER_START = `${ALPHA}_,@$`;
-const IDENTIFIER = `${ALPHANUMERIC}_,:\-`;
+const IDENTIFIER_ILLEGAL = `()[]{}",'\`;#|\\${WHITESPACE}`;
 const lexIdentifier: StateFunction = function* (l: Lexer) {
-  l.accept(IDENTIFIER_START);
-  l.acceptRun(IDENTIFIER);
+  while (!IDENTIFIER_ILLEGAL.includes(l.next()));
+  l.backup();
+  expectSeparator(l);
   yield NodeType.Identifier;
   return lexDefault;
 };
 
-const STRING_START = `'"\``;
+const STRING_START = `"\``;
 const lexString: StateFunction = function* (l: Lexer) {
   const quoteType = l.next()!;
   while (!l.eof()) {
@@ -203,12 +256,9 @@ const lexDefault: StateFunction = function* (l: Lexer) {
       return lexString;
     } else if (Lexer.matches(curr, WHITESPACE)) {
       l.ignore();
-    } else if (Lexer.matches(curr, IDENTIFIER_START)) {
+    } else {
       l.backup();
       return lexIdentifier;
-    } else {
-      l.error(`unexpected ${curr}`);
-      break;
     }
   }
   return null;
