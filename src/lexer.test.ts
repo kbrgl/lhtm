@@ -22,7 +22,7 @@ Deno.test({
 Deno.test({
   name: "simple S-expression with only numbers",
   fn: () => {
-    assertEquals(lex("(1 2352 1235.6 3.0 -5 +3 #xfF)"), [
+    assertEquals(lex("(1 2352 1235.6 3.0 -5 +3 23_000 #xfF)"), [
       node(NodeType.LParen, "("),
       node(NodeType.Number, "1"),
       node(NodeType.Number, "2352"),
@@ -30,6 +30,7 @@ Deno.test({
       node(NodeType.Number, "3.0"),
       node(NodeType.Number, "-5"),
       node(NodeType.Number, "+3"),
+      node(NodeType.Number, "23_000"),
       node(NodeType.Number, "#xfF"),
       node(NodeType.RParen, ")"),
       node(NodeType.EOF, ""),
