@@ -22,7 +22,7 @@ Deno.test({
 Deno.test({
   name: "simple S-expression with only numbers",
   fn: () => {
-    assertEquals(lex("(1 2352 1235.6 3.0 -5 +3 0xfF)"), [
+    assertEquals(lex("(1 2352 1235.6 3.0 -5 +3 #xfF)"), [
       node(NodeType.LParen, "("),
       node(NodeType.Number, "1"),
       node(NodeType.Number, "2352"),
@@ -30,7 +30,7 @@ Deno.test({
       node(NodeType.Number, "3.0"),
       node(NodeType.Number, "-5"),
       node(NodeType.Number, "+3"),
-      node(NodeType.Number, "0xfF"),
+      node(NodeType.Number, "#xfF"),
       node(NodeType.RParen, ")"),
       node(NodeType.EOF, ""),
     ]);
@@ -115,11 +115,29 @@ Deno.test({
 });
 
 Deno.test({
-  name: "number with invalid prefix",
+  name: "number with invalid suffix",
   fn: () => {
     assertThrows(() => {
       lex("(1.2e3)");
     });
+  },
+});
+
+Deno.test({
+  name: "valid missed space",
+  fn: () => {
+    assertEquals(lex("(define x(+ 1 2))"), [
+      node(NodeType.LParen, "("),
+      node(NodeType.Identifier, "define"),
+      node(NodeType.Identifier, "x"),
+      node(NodeType.LParen, "("),
+      node(NodeType.Identifier, "+"),
+      node(NodeType.Number, "1"),
+      node(NodeType.Number, "2"),
+      node(NodeType.RParen, ")"),
+      node(NodeType.RParen, ")"),
+      node(NodeType.EOF, ""),
+    ]);
   },
 });
 
