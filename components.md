@@ -1,14 +1,13 @@
 # Necromancy
 
-Necromancy is an unholy web programming environment based on LHTM. You can think of it as a mix of Svelte, PHP, and HTML templating languages like Nunjucks. The idea is to have a complete system for building modern, reactive component-based websites in _only_ Lisp.
+Necromancy is an unholy static site framework based on LHTM.
 
-There are only 3 core concepts:
+There are only 2 core concepts that you need to know beyond regular programming languages and HTML:
 
-- Macros, which you use in place of templates;
-- Functions, which you use just like function in any other language;
-- Components, which you use like Svelte components.
+- Components, which are compiled to JavaScript code that "surgically updates the DOM" a la Svelte (i.e. there's no runtime dependencies), and
+- Macros, which do the job of partials, mixins, and layouts in other templating languages
 
-Okay, maybe there are 4. You also need to know LHTM, a templating language based on Lisp's [s-expressions](https://en.wikipedia.org/wiki/S-expression "relevant Wikipedia article"):
+Okay, maybe there's one more. You also need to know LHTM, a templating language based on Lisp's [s-expressions](https://en.wikipedia.org/wiki/S-expression "relevant Wikipedia article"):
 
 ```clojure
 (component counter [ @color @count ]
