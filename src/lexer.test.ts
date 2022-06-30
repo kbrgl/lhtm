@@ -218,3 +218,39 @@ Deno.test({
     ]);
   },
 });
+
+Deno.test({
+  name: "#env declaration",
+  fn: () => {
+    assertEquals(lex("#env html\n(define x y)"), [
+      lexeme(LexemeType.Env, "#env"),
+      lexeme(LexemeType.Identifier, "html"),
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.Identifier, "define"),
+      lexeme(LexemeType.Identifier, "x"),
+      lexeme(LexemeType.Identifier, "y"),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.EOF, ""),
+    ]);
+  },
+});
+
+Deno.test({
+  name: "bare #env declaration without anything else",
+  fn: () => {
+    assertEquals(lex("#env html"), [
+      lexeme(LexemeType.Env, "#env"),
+      lexeme(LexemeType.Identifier, "html"),
+      lexeme(LexemeType.EOF, ""),
+    ]);
+  },
+});
+
+Deno.test({
+  name: "typo in #env declaration",
+  fn: () => {
+    assertThrows(() => {
+      lex("#environment html\n(define x y)");
+    });
+  },
+});
