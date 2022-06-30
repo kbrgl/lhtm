@@ -2,19 +2,18 @@ import {
   assertEquals,
   assertThrows,
 } from "https://deno.land/std@0.145.0/testing/asserts.ts";
-import { lex } from "./lexer.ts";
-import { node, NodeType } from "./node.ts";
+import { lex, LexemeType, lexeme } from "./lexer.ts";
 
 Deno.test({
   name: "simple S-expression with only identifiers",
   fn: () => {
     assertEquals(lex("(ay bee cee)"), [
-      node(NodeType.LParen, "("),
-      node(NodeType.Identifier, "ay"),
-      node(NodeType.Identifier, "bee"),
-      node(NodeType.Identifier, "cee"),
-      node(NodeType.RParen, ")"),
-      node(NodeType.EOF, ""),
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.Identifier, "ay"),
+      lexeme(LexemeType.Identifier, "bee"),
+      lexeme(LexemeType.Identifier, "cee"),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.EOF, ""),
     ]);
   },
 });
@@ -23,17 +22,17 @@ Deno.test({
   name: "simple S-expression with only numbers",
   fn: () => {
     assertEquals(lex("(1 2352 1235.6 3.0 -5 +3 23_000 #xfF)"), [
-      node(NodeType.LParen, "("),
-      node(NodeType.Number, "1"),
-      node(NodeType.Number, "2352"),
-      node(NodeType.Number, "1235.6"),
-      node(NodeType.Number, "3.0"),
-      node(NodeType.Number, "-5"),
-      node(NodeType.Number, "+3"),
-      node(NodeType.Number, "23_000"),
-      node(NodeType.Number, "#xfF"),
-      node(NodeType.RParen, ")"),
-      node(NodeType.EOF, ""),
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.Number, "1"),
+      lexeme(LexemeType.Number, "2352"),
+      lexeme(LexemeType.Number, "1235.6"),
+      lexeme(LexemeType.Number, "3.0"),
+      lexeme(LexemeType.Number, "-5"),
+      lexeme(LexemeType.Number, "+3"),
+      lexeme(LexemeType.Number, "23_000"),
+      lexeme(LexemeType.Number, "#xfF"),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.EOF, ""),
     ]);
   },
 });
@@ -42,10 +41,10 @@ Deno.test({
   name: "simple S-expression, one string with no escapes",
   fn: () => {
     assertEquals(lex('("ay bee cee")'), [
-      node(NodeType.LParen, "("),
-      node(NodeType.String, '"ay bee cee"'),
-      node(NodeType.RParen, ")"),
-      node(NodeType.EOF, ""),
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.String, '"ay bee cee"'),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.EOF, ""),
     ]);
   },
 });
@@ -54,10 +53,10 @@ Deno.test({
   name: "simple S-expression, one string with escapes",
   fn: () => {
     assertEquals(lex('("ay bee cee\\" dee ")'), [
-      node(NodeType.LParen, "("),
-      node(NodeType.String, '"ay bee cee\\" dee "'),
-      node(NodeType.RParen, ")"),
-      node(NodeType.EOF, ""),
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.String, '"ay bee cee\\" dee "'),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.EOF, ""),
     ]);
   },
 });
@@ -66,9 +65,9 @@ Deno.test({
   name: "comments",
   fn: () => {
     assertEquals(lex("; this is a comment\n;; another comment.'"), [
-      node(NodeType.Comment, "; this is a comment"),
-      node(NodeType.HTMLComment, ";; another comment.'"),
-      node(NodeType.EOF, ""),
+      lexeme(LexemeType.Comment, "; this is a comment"),
+      lexeme(LexemeType.HTMLComment, ";; another comment.'"),
+      lexeme(LexemeType.EOF, ""),
     ]);
   },
 });
@@ -77,15 +76,15 @@ Deno.test({
   name: "nested S-expressions",
   fn: () => {
     assertEquals(lex("(1 (2 3) 4)"), [
-      node(NodeType.LParen, "("),
-      node(NodeType.Number, "1"),
-      node(NodeType.LParen, "("),
-      node(NodeType.Number, "2"),
-      node(NodeType.Number, "3"),
-      node(NodeType.RParen, ")"),
-      node(NodeType.Number, "4"),
-      node(NodeType.RParen, ")"),
-      node(NodeType.EOF, ""),
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.Number, "1"),
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.Number, "2"),
+      lexeme(LexemeType.Number, "3"),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.Number, "4"),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.EOF, ""),
     ]);
   },
 });
@@ -128,16 +127,16 @@ Deno.test({
   name: "valid missed space",
   fn: () => {
     assertEquals(lex("(define x(+ 1 2))"), [
-      node(NodeType.LParen, "("),
-      node(NodeType.Identifier, "define"),
-      node(NodeType.Identifier, "x"),
-      node(NodeType.LParen, "("),
-      node(NodeType.Identifier, "+"),
-      node(NodeType.Number, "1"),
-      node(NodeType.Number, "2"),
-      node(NodeType.RParen, ")"),
-      node(NodeType.RParen, ")"),
-      node(NodeType.EOF, ""),
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.Identifier, "define"),
+      lexeme(LexemeType.Identifier, "x"),
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.Identifier, "+"),
+      lexeme(LexemeType.Number, "1"),
+      lexeme(LexemeType.Number, "2"),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.EOF, ""),
     ]);
   },
 });
@@ -146,13 +145,13 @@ Deno.test({
   name: "identifier with arithmetic operators",
   fn: () => {
     assertEquals(lex("(+ - * /)"), [
-      node(NodeType.LParen, "("),
-      node(NodeType.Identifier, "+"),
-      node(NodeType.Identifier, "-"),
-      node(NodeType.Identifier, "*"),
-      node(NodeType.Identifier, "/"),
-      node(NodeType.RParen, ")"),
-      node(NodeType.EOF, ""),
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.Identifier, "+"),
+      lexeme(LexemeType.Identifier, "-"),
+      lexeme(LexemeType.Identifier, "*"),
+      lexeme(LexemeType.Identifier, "/"),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.EOF, ""),
     ]);
   },
 });
@@ -161,10 +160,10 @@ Deno.test({
   name: "expressions not separated by spaces",
   fn: () => {
     assertThrows(() => {
-      lex("(''134e6) ; comment");
+      lex("(134e6) ; comment");
     });
     assertThrows(() => {
-      lex("(''sdf)");
+      lex("(sdf 0.512.5)");
     });
   },
 });
@@ -173,27 +172,49 @@ Deno.test({
   name: "end of line comment",
   fn: () => {
     assertEquals(lex("(1 2 3) ; comment"), [
-      node(NodeType.LParen, "("),
-      node(NodeType.Number, "1"),
-      node(NodeType.Number, "2"),
-      node(NodeType.Number, "3"),
-      node(NodeType.RParen, ")"),
-      node(NodeType.Comment, "; comment"),
-      node(NodeType.EOF, ""),
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.Number, "1"),
+      lexeme(LexemeType.Number, "2"),
+      lexeme(LexemeType.Number, "3"),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.Comment, "; comment"),
+      lexeme(LexemeType.EOF, ""),
     ]);
   },
 });
 
 Deno.test({
-  name: "symbols",
+  name: "quoted stuff",
   fn: () => {
     assertEquals(lex("(define x 'y)"), [
-      node(NodeType.LParen, "("),
-      node(NodeType.Identifier, "define"),
-      node(NodeType.Identifier, "x"),
-      node(NodeType.Symbol, "'y"),
-      node(NodeType.RParen, ")"),
-      node(NodeType.EOF, ""),
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.Identifier, "define"),
+      lexeme(LexemeType.Identifier, "x"),
+      lexeme(LexemeType.SingleQuote, "'"),
+      lexeme(LexemeType.Identifier, "y"),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.EOF, ""),
+    ]);
+  },
+});
+
+Deno.test({
+  name: "quoted nesting",
+  fn: () => {
+    assertEquals(lex("(define x '(+ 2 3) ,abcdef)"), [
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.Identifier, "define"),
+      lexeme(LexemeType.Identifier, "x"),
+      lexeme(LexemeType.SingleQuote, "'"),
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.Identifier, "+"),
+      lexeme(LexemeType.Number, "2"),
+      lexeme(LexemeType.Number, "3"),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.Comma, ","),
+      lexeme(LexemeType.Identifier, "abcdef"),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.EOF, ""),
     ]);
   },
 });

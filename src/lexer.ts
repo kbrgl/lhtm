@@ -1,7 +1,33 @@
-import { node, Node, NodeType } from "./node.ts";
+export enum LexemeType {
+  LParen = "LParen",
+  RParen = "RParen",
+  Number = "Number",
+  String = "String",
+  Identifier = "Identifier",
+  EOF = "EOF",
+  Comment = "Comment",
+  HTMLComment = "HTMLComment",
+  Backtick = "Backtick",
+  Comma = "Comma",
+  SingleQuote = "SingleQuote",
+}
+
+export type LexemeValue = string | null;
+
+export interface Lexeme {
+  type: LexemeType;
+  value: LexemeValue;
+}
+
+export function lexeme(type: LexemeType, value: LexemeValue): Lexeme {
+  return {
+    type,
+    value,
+  };
+}
 
 type StateFunction =
-  | ((l: Lexer) => Generator<NodeType, StateFunction, undefined>)
+  | ((l: Lexer) => Generator<Lexeme | LexemeType, StateFunction, undefined>)
   | null;
 
 class Lexer {
@@ -74,8 +100,8 @@ class Lexer {
     this.start = this.cursor;
   }
 
-  emit(lexemeType: NodeType) {
-    const result = node(lexemeType, this.value());
+  emit(lexemeType: LexemeType) {
+    const result = lexeme(lexemeType, this.value());
     this.start = this.cursor;
     return result;
   }
@@ -85,10 +111,14 @@ class Lexer {
       const emitter = stateFn(this);
       let item = emitter.next();
       while (!item.done) {
-        const { value: lexemeType } = item;
+        const { value: lexemeOrType } = item;
 
-        // Emit this node and move the cursor.
-        yield this.emit(lexemeType);
+        if ((<Lexeme>lexemeOrType).value !== undefined) {
+          yield lexemeOrType as Lexeme;
+        } else {
+          // Emit this node and move the cursor.
+          yield this.emit(<LexemeType>lexemeOrType);
+        }
 
         item = emitter.next();
       }
@@ -114,8 +144,6 @@ class Lexer {
 
 const ALPHA = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const DIGIT = "0123456789";
-// deno-lint-ignore no-unused-vars
-const ALPHANUMERIC = `${ALPHA}0123456789`;
 const WHITESPACE = " \t\n\r";
 const HEX_DIGIT = "0123456789abcdefABCDEF";
 const BIN_DIGIT = "01";
@@ -178,16 +206,16 @@ const lexNumber: StateFunction = function* (l: Lexer) {
   // number followed by an identifier.
   expectSeparator(l);
 
-  yield NodeType.Number;
+  yield LexemeType.Number;
   return lexDefault;
 };
 
-const IDENTIFIER_ILLEGAL = `()[]{}",'\`;#|\\${WHITESPACE}`;
+const IDENTIFIER_ILLEGAL = `()",'\`;#|\\${WHITESPACE}`;
 const lexIdentifier: StateFunction = function* (l: Lexer) {
   while (!IDENTIFIER_ILLEGAL.includes(l.next()));
   l.backup();
   expectSeparator(l);
-  yield NodeType.Identifier;
+  yield LexemeType.Identifier;
   return lexDefault;
 };
 
@@ -200,7 +228,7 @@ const lexString: StateFunction = function* (l: Lexer) {
       continue;
     }
     if (l.accept(quoteType)) {
-      yield NodeType.String;
+      yield LexemeType.String;
       return lexDefault;
     }
     l.next();
@@ -224,9 +252,29 @@ const lexComment: StateFunction = function* (l: Lexer) {
   }
 
   if (html) {
-    yield NodeType.HTMLComment;
+    yield LexemeType.HTMLComment;
   } else {
-    yield NodeType.Comment;
+    yield LexemeType.Comment;
+  }
+  return lexDefault;
+};
+
+const lexModifier: StateFunction = function* (l: Lexer) {
+  const curr = l.next();
+  const next = l.peek();
+  if (IDENTIFIER_ILLEGAL.includes(next) && next !== "(") {
+    l.error(`${curr} cannot be followed by ${next}`);
+  }
+  switch (curr) {
+    case "'":
+      yield LexemeType.SingleQuote;
+      break;
+    case ",":
+      yield LexemeType.Comma;
+      break;
+    case "`":
+      yield LexemeType.Backtick;
+      break;
   }
   return lexDefault;
 };
@@ -235,22 +283,15 @@ const lexDefault: StateFunction = function* (l: Lexer) {
   while (true) {
     const curr = l.next();
     if (curr === Lexer.EOF) {
-      yield NodeType.EOF;
+      yield LexemeType.EOF;
       break;
     } else if (curr == "(") {
-      yield NodeType.LParen;
+      yield LexemeType.LParen;
     } else if (curr == ")") {
-      yield NodeType.RParen;
-    } else if (curr == "[") {
-      yield NodeType.LBracket;
-    } else if (curr == "]") {
-      yield NodeType.RBracket;
-    } else if (curr == ",") {
-      yield NodeType.Comma;
-    } else if (curr == "'") {
-      yield NodeType.Quote;
-    } else if (curr == "`") {
-      yield NodeType.Quasiquote;
+      yield LexemeType.RParen;
+    } else if (curr == "'" || curr == "`" || curr == ",") {
+      l.backup();
+      return lexModifier;
     } else if (curr == ";") {
       l.backup();
       return lexComment;
@@ -270,7 +311,7 @@ const lexDefault: StateFunction = function* (l: Lexer) {
   return null;
 };
 
-export function lex(blob: string): Node[] {
+export function lex(blob: string): Lexeme[] {
   const l = new Lexer(blob);
   return Array.from(l.run(lexDefault));
 }
