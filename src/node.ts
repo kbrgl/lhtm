@@ -1,5 +1,5 @@
 export enum NodeType {
-  Program = "Program",
+  Environment = "Environment",
   List = "List",
   Identifier = "Identifier",
   Number = "Number",

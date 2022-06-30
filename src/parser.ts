@@ -48,7 +48,7 @@ function toAtom(lexeme: Lexeme): Node {
 }
 
 export function parse(lexemes: Lexeme[]): Node {
-  const stack: Node[] = [node(NodeType.Program, null, [])];
+  const stack: Node[] = [node(NodeType.Environment, null, [])];
   while (true) {
     const lexeme = lexemes[0];
     if (lexeme.type === LexemeType.EOF) {
