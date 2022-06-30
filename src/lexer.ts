@@ -142,7 +142,6 @@ class Lexer {
   }
 }
 
-const ALPHA = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const DIGIT = "0123456789";
 const WHITESPACE = " \t\n\r";
 const HEX_DIGIT = "0123456789abcdefABCDEF";
