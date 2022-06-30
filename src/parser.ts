@@ -1,50 +1,47 @@
-import { lex } from "./lexer.ts";
-import { NodeType, Node } from "./node.ts";
+import { lex, Lexeme, LexemeType } from "./lexer.ts";
+import { node, Node, NodeType } from "./node.ts";
 
-type Tree = Node | Tree[];
-
-function getTreePath(tree: Tree[], path: number[]): Tree[] {
-  if (path.length === 0) {
-    return tree;
-  } else {
-    const [head, ...tail] = path;
-    return getTreePath(tree[head] as Tree[], tail);
-  }
+function isAtom(lexeme: Lexeme) {
+  return [LexemeType.Identifier, LexemeType.Number, LexemeType.String].includes(
+    lexeme.type
+  );
 }
 
-/**
- * Parses a string into an S-Expression.
- * @param blob The blob to parse.
- * @returns The S-Expression.
- * @throws Throws an error if the blob is not a valid S-Expression.
- */
-export function parse(blob: string): Tree {
-  const lexemes = lex(blob);
-  const tree: Tree = [];
-  const path: number[] = []; // Stack of positions in the AST.
+function toAtom(lexeme: Lexeme): Node {
+  switch (lexeme.type) {
+    case LexemeType.Identifier:
+      return node(NodeType.Identifier, lexeme.value);
+    case LexemeType.Number:
+      return node(NodeType.Number, lexeme.value);
+    case LexemeType.String:
+      return node(
+        NodeType.String,
+        lexeme.value?.slice(1, lexeme.value.length - 1) || null
+      );
+  }
+  throw new Error("passed lexeme is not atomic");
+}
 
-  for (const lxm of lexemes) {
-    switch (lxm.type) {
-      case NodeType.LParen:
-        getTreePath(tree, path).push([]);
-        path.push(getTreePath(tree, path)!.length - 1);
-        break;
-      case NodeType.RParen: {
-        if (path.length === 0) {
-          throw new Error("Unexpected ')'");
-        }
-        path.pop()!;
-        break;
+export function parse(lexemes: Lexeme[]): Node {
+  const stack: Node[] = [node(NodeType.Program, null, [])];
+  while (true) {
+    const [lexeme, ...rest] = lexemes;
+    lexemes = rest;
+    if (isAtom(lexeme)) {
+      stack[stack.length - 1].children.push(toAtom(lexeme));
+    } else if (lexeme.type === LexemeType.LParen) {
+      // Create a new list.
+      const listNode = node(NodeType.List, null, []);
+      stack[stack.length - 1].children.push(listNode);
+      stack.push(listNode);
+    } else if (lexeme.type === LexemeType.RParen) {
+      if (stack.length <= 1) {
+        throw new Error("unmatched )");
       }
-      case NodeType.EOF:
-        break;
-      case NodeType.Comment:
-      case NodeType.HTMLComment:
-        break;
-      default:
-        getTreePath(tree, path)!.push(lxm);
+      stack.pop();
+    } else if (lexeme.type === LexemeType.EOF) {
+      break;
     }
   }
-
-  return tree;
+  return stack[0];
 }

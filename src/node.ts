@@ -1,17 +1,9 @@
 export enum NodeType {
-  LParen = "LParen",
-  RParen = "RParen",
+  Program = "Program",
+  List = "List",
+  Identifier = "Identifier",
   Number = "Number",
   String = "String",
-  Identifier = "Identifier",
-  EOF = "EOF",
-  Comment = "Comment",
-  HTMLComment = "HTMLComment",
-  LBracket = "LBracket",
-  RBracket = "RBracket",
-  Comma = "Comma",
-  Quote = "Quote",
-  Quasiquote = "Quasiquote",
 }
 
 export type NodeValue = string | null;
@@ -19,11 +11,17 @@ export type NodeValue = string | null;
 export interface Node {
   type: NodeType;
   value: NodeValue;
+  children: Node[];
 }
 
-export function node(type: NodeType, value: NodeValue = null): Node {
+export function node(
+  type: NodeType,
+  value: NodeValue,
+  children: Node[] = []
+): Node {
   return {
     type,
     value,
+    children,
   };
 }
