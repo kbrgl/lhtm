@@ -5,6 +5,28 @@ import {
 import { lex, LexemeType, lexeme } from "./lexer.ts";
 
 Deno.test({
+  name: "bare identifier",
+  fn: () => {
+    assertEquals(lex("x"), [
+      lexeme(LexemeType.Identifier, "x"),
+      lexeme(LexemeType.EOF, ""),
+    ]);
+  },
+});
+
+Deno.test({
+  name: "bare call",
+  fn: () => {
+    assertEquals(lex("(x)"), [
+      lexeme(LexemeType.LParen, "("),
+      lexeme(LexemeType.Identifier, "x"),
+      lexeme(LexemeType.RParen, ")"),
+      lexeme(LexemeType.EOF, ""),
+    ]);
+  },
+});
+
+Deno.test({
   name: "simple S-expression with only identifiers",
   fn: () => {
     assertEquals(lex("(ay bee cee)"), [

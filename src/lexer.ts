@@ -1,4 +1,5 @@
 export enum LexemeType {
+  Env = "Env",
   LParen = "LParen",
   RParen = "RParen",
   Number = "Number",
@@ -132,13 +133,13 @@ class Lexer {
         .replaceAll("\n", "\\n")
         .replaceAll("\r", "\\r")
         .replaceAll("\t", "\\t");
-      this.error(message || `expected one of >>>${prettyPattern}<<<`);
+      this.error(message || `expected one of ${prettyPattern}`);
     }
   }
 
   error(message: string) {
     const relevant = this.blob.slice(this.start, this.cursor);
-    throw new Error(`${message} at >>>${relevant}<<<`);
+    throw new Error(`${message} at ${relevant}`);
   }
 }
 
@@ -211,8 +212,12 @@ const lexNumber: StateFunction = function* (l: Lexer) {
 
 const IDENTIFIER_ILLEGAL = `()",'\`;#|\\${WHITESPACE}`;
 const lexIdentifier: StateFunction = function* (l: Lexer) {
-  while (!IDENTIFIER_ILLEGAL.includes(l.next()));
-  l.backup();
+  while (!l.eof() && !Lexer.matches(l.next(), IDENTIFIER_ILLEGAL));
+
+  if (l.eof()) {
+    l.backup();
+  }
+
   expectSeparator(l);
   yield LexemeType.Identifier;
   return lexDefault;
@@ -278,6 +283,19 @@ const lexModifier: StateFunction = function* (l: Lexer) {
   return lexDefault;
 };
 
+const lexEnv: StateFunction = function* (l: Lexer) {
+  l.assert("#");
+  l.assert("e");
+  l.assert("n");
+  l.assert("v");
+
+  expectSeparator(l);
+
+  yield LexemeType.Env;
+
+  return lexDefault;
+};
+
 const lexDefault: StateFunction = function* (l: Lexer) {
   while (true) {
     const curr = l.next();
@@ -294,6 +312,9 @@ const lexDefault: StateFunction = function* (l: Lexer) {
     } else if (curr == ";") {
       l.backup();
       return lexComment;
+    } else if (curr == "#" && l.peek() == "e") {
+      l.backup();
+      return lexEnv;
     } else if (Lexer.matches(curr, NUMBER_START)) {
       l.backup();
       return lexNumber;
@@ -314,3 +335,4 @@ export function lex(blob: string): Lexeme[] {
   const l = new Lexer(blob);
   return Array.from(l.run(lexDefault));
 }
+
